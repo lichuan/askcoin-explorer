@@ -205,25 +205,25 @@ ws.onmessage = function (ev) {
         }
         $("#main_table").empty();
         $("#main_table").append('<tr class="title">' +
-            '        <td>Height</td>' +
-            '        <td>Hash</td>' +
-            '        <td>UTC</td>' +
-            '        <td>Zero_bits</td>' +
-            '        <td>Miner</td>' +
-            '        <td>Transactions</td>' +
-            '    </tr>');
+            '<td>Height</td>' +
+            '<td>Hash</td>' +
+            '<td>UTC</td>' +
+            '<td>Zero_bits</td>' +
+            '<td>Miner</td>' +
+            '<td>Transactions</td>' +
+            '</tr>');
         for (var i = 0; i < obj.block_list.length; ++i) {
             var block = obj.block_list[i];
             var dt_str = utc_str(block.utc);
             $("#main_table").append('' +
-                '    <tr class="data">' +
-                '    <td>' + block.block_id + '</td>' +
-                '    <td><a href="javascript:void(0);" block_hash=' + block.block_hash + '>' + block.block_hash + '</a></td>' +
-                '    <td>' + dt_str + '</td>' +
-                '    <td>' + block.zero_bits + '</td>' +
-                '    <td><a href="javascript:void(0);" pubkey=' + block.miner_pubkey + '>' + Base64.decode(block.miner_name) + '</td>' +
-                '    <td>' + block.tx_num + '</td>' +
-                '    </tr>');
+                '<tr class="data">' +
+                '<td>' + block.block_id + '</td>' +
+                '<td><a href="javascript:void(0);" block_hash=' + block.block_hash + '>' + block.block_hash + '</a></td>' +
+                '<td>' + dt_str + '</td>' +
+                '<td>' + block.zero_bits + '</td>' +
+                '<td><a href="javascript:void(0);" pubkey=' + block.miner_pubkey + '>' + Base64.decode(block.miner_name) + '</td>' +
+                '<td>' + block.tx_num + '</td>' +
+                '</tr>');
         }
         $("#main_table tr.data td:nth-child(2) a").off("click").on("click", function () {
             // event.preventDefault();
@@ -272,25 +272,25 @@ ws.onmessage = function (ev) {
         page_array.push({page: $("#main_table").clone(), last_hash: last_hash});
         $("#main_table").empty();
         $("#main_table").append('<tr class="title">' +
-            '        <td>Height</td>' +
-            '        <td>Hash</td>' +
-            '        <td>UTC</td>' +
-            '        <td>Zero_bits</td>' +
-            '        <td>Miner</td>' +
-            '        <td>Transactions</td>' +
-            '    </tr>');
+            '<td>Height</td>' +
+            '<td>Hash</td>' +
+            '<td>UTC</td>' +
+            '<td>Zero_bits</td>' +
+            '<td>Miner</td>' +
+            '<td>Transactions</td>' +
+            '</tr>');
         for (var i = 0; i < obj.block_list.length; ++i) {
             var block = obj.block_list[i];
             var dt_str = utc_str(block.utc);
             $("#main_table").append('' +
-                '    <tr class="data">' +
-                '    <td>' + block.block_id + '</td>' +
-                '    <td><a href="javascript:void(0);" block_hash=' + block.block_hash + '>' + block.block_hash + '</a></td>' +
-                '    <td>' + dt_str + '</td>' +
-                '    <td>' + block.zero_bits + '</td>' +
-                '    <td><a href="javascript:void(0);" pubkey=' + block.miner_pubkey + '>' + Base64.decode(block.miner_name) + '</td>' +
-                '    <td>' + block.tx_num + '</td>' +
-                '    </tr>');
+                '<tr class="data">' +
+                '<td>' + block.block_id + '</td>' +
+                '<td><a href="javascript:void(0);" block_hash=' + block.block_hash + '>' + block.block_hash + '</a></td>' +
+                '<td>' + dt_str + '</td>' +
+                '<td>' + block.zero_bits + '</td>' +
+                '<td><a href="javascript:void(0);" pubkey=' + block.miner_pubkey + '>' + Base64.decode(block.miner_name) + '</td>' +
+                '<td>' + block.tx_num + '</td>' +
+                '</tr>');
         }
         if (!enable_previous) {
             $("nav li:first button").removeClass("disabled");
@@ -461,7 +461,7 @@ ws.onmessage = function (ev) {
             var txobj = arr_by_time[i];
             $("#txs").append('' +
                 '<tr class="data">' +
-                '<td><a href="javascript:void(0);" tx_hash='  + txobj.tx + '>' + txobj.tx + '</a></td>' +
+                '<td><a href="javascript:void(0);" tx_hash=' + txobj.tx + '>' + txobj.tx + '</a></td>' +
                 '<td>' + utc_str(txobj.utc) + '</td>' +
                 '</tr>'
             );
@@ -550,7 +550,7 @@ ws.onmessage = function (ev) {
             '</tr>' +
             '<tr class="twofield">' +
             '<td>Miner name</td>' +
-            '<td id="miner"><a href="javascript:void(0);" pubkey='  + obj.miner_pubkey + '>' + Base64.decode(obj.miner_name) + '</a></td>' +
+            '<td id="miner"><a href="javascript:void(0);" pubkey=' + obj.miner_pubkey + '>' + Base64.decode(obj.miner_name) + '</a></td>' +
             '</tr>' +
             '<tr class="twofield">' +
             '<td>Block reward</td>' +
@@ -574,7 +574,7 @@ ws.onmessage = function (ev) {
             var tx_id = obj.tx_list[i];
             $("#txs").append('' +
                 '<tr class="data">' +
-                '<td><a href="javascript:void(0);" tx_hash='  + tx_id + '>' + tx_id + '</a></td>' +
+                '<td><a href="javascript:void(0);" tx_hash=' + tx_id + '>' + tx_id + '</a></td>' +
                 '</tr>'
             );
         }
