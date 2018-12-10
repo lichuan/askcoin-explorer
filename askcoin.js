@@ -15,7 +15,6 @@ var enable_previous = false;
 var enable_next = true;
 var in_main_page = true;
 var block_list_page = null;
-var start_from_main_page = false;
 var msg_id = 0;
 var history_pages = {};
 var last_hash = null;
@@ -49,6 +48,29 @@ function utc_str(utc) {
     return dt_str;
 }
 
+function syntaxHighlight(json) {
+    if (typeof json != 'string') {
+        json = JSON.stringify(json, undefined, 2);
+    }
+    json = json.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+        function(match) {
+        var cls = 'number';
+        if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+                cls = 'key';
+            } else {
+                cls = 'string';
+            }
+        } else if (/true|false/.test(match)) {
+            cls = 'boolean';
+        } else if (/null/.test(match)) {
+            cls = 'null';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+    });
+}
+
 ws.onopen = function (ev) {
     setTimeout(function () {
         ws.send(JSON.stringify({msg_type:MSG_SYS, msg_cmd:SYS_PING, msg_id:0}));
@@ -70,8 +92,7 @@ window.onpopstate = function () {
     if(history.state == null || !history_pages[history.state.hash]) {
         if(block_list_page) {
             $("#top_div_2").remove();
-            $("#top_div_1").append(block_list_page);
-            block_list_page = null;
+            $("#top_div_1").append(block_list_page.page);
             $("#main_table tr.data td:nth-child(2) a").off("click").on("click", function () {
                 // event.preventDefault();
                 var block_hash = $(this).attr("block_hash");
@@ -100,7 +121,7 @@ window.onpopstate = function () {
                     block_hash: last_hash
                 }));
             });
-            if(start_from_main_page) {
+            if(block_list_page.from_main) {
                 in_main_page = true;
                 setTimeout(function () {
                     ws.send(JSON.stringify({msg_type:MSG_EXPLORER, msg_cmd:EXPLORER_MAIN_PAGE, msg_id:0}));
@@ -169,6 +190,12 @@ window.onpopstate = function () {
                 }));
                 return false;
             });
+            $("#txs a").off("click").on("click", function () {
+                // event.preventDefault();
+                var tx_hash = $(this).attr("tx_hash");
+                ws.send(JSON.stringify({msg_type: MSG_EXPLORER, msg_cmd: EXPLORER_TX_PAGE, msg_id:++msg_id, block_hash:history.state.hash, tx_hash:tx_hash}));
+                return false;
+            });
         } else if(history.state.type == "account") {
             $("#referrer a").off("click").on("click", function () {
                 // event.preventDefault();
@@ -179,6 +206,42 @@ window.onpopstate = function () {
                     msg_id: ++msg_id,
                     pubkey: pubkey
                 }));
+                return false;
+            });
+            $("#txs a").off("click").on("click", function () {
+                // event.preventDefault();
+                var tx_hash = $(this).attr("tx_hash");
+                var block_hash = $(this).attr("block_hash");
+                ws.send(JSON.stringify({msg_type: MSG_EXPLORER, msg_cmd: EXPLORER_TX_PAGE, msg_id:++msg_id, block_hash:block_hash, tx_hash:tx_hash}));
+                return false;
+            });
+        } else if(history.state.type == "tx") {
+            $("#owner a").off("click").on("click", function () {
+                // event.preventDefault();
+                var pubkey = $(this).attr("pubkey");
+                ws.send(JSON.stringify({
+                    msg_type: MSG_EXPLORER,
+                    msg_cmd: EXPLORER_ACCOUNT_PAGE,
+                    msg_id: ++msg_id,
+                    pubkey: pubkey
+                }));
+                return false;
+            });
+            $("#other a").off("click").on("click", function () {
+                // event.preventDefault();
+                var pubkey = $(this).attr("pubkey");
+                ws.send(JSON.stringify({
+                    msg_type: MSG_EXPLORER,
+                    msg_cmd: EXPLORER_ACCOUNT_PAGE,
+                    msg_id: ++msg_id,
+                    pubkey: pubkey
+                }));
+                return false;
+            });
+            $("#txblock a").off("click").on("click", function () {
+                // event.preventDefault();
+                var block_hash = $(this).attr("block_hash");
+                ws.send(JSON.stringify({msg_type: MSG_EXPLORER, msg_cmd: EXPLORER_BLOCK_PAGE, msg_id:++msg_id, block_hash:block_hash}));
                 return false;
             });
         }
@@ -261,6 +324,9 @@ ws.onmessage = function (ev) {
                 }));
             }));
         }
+        block_list_page = {};
+        block_list_page.page = $("#top_div_2").clone();
+        block_list_page.from_main = true;
         setTimeout(function () {
             ws.send(JSON.stringify({msg_type:MSG_EXPLORER, msg_cmd:EXPLORER_MAIN_PAGE, msg_id:0}));
         }, 5000);
@@ -381,26 +447,21 @@ ws.onmessage = function (ev) {
                 }));
             });
         }
+        block_list_page = {};
+        block_list_page.page = $("#top_div_2").clone();
+        block_list_page.from_main = false;
     }else if(obj.msg_cmd == EXPLORER_ACCOUNT_PAGE) {
-        if(obj.msg_id != msg_id) {
+        if (obj.msg_id != msg_id) {
             return;
         }
-        if(in_main_page) {
-            in_main_page = false;
-            start_from_main_page = true;
-        } else {
-            start_from_main_page = false;
-        }
-        if(!block_list_page) {
-            block_list_page = $("#top_div_2").clone();
-        }
+        in_main_page = false;
         $("#top_div_2").remove();
         var top_div_2 = $('<div id="top_div_2"></div>');
         var check_dict = {};
         var arr_by_time = [];
-        for(var i = 0; i < obj.txs.length; ++i) {
+        for (var i = 0; i < obj.txs.length; ++i) {
             var txobj = obj.txs[i];
-            if(!check_dict[txobj.tx]) {
+            if (!check_dict[txobj.tx]) {
                 check_dict[txobj.tx] = true;
                 arr_by_time.unshift(txobj);
             }
@@ -410,7 +471,7 @@ ws.onmessage = function (ev) {
             '<li>Home | Account | <span>' + obj.id + '</span></li>' +
             '</ol>' +
             '<h3 style="margin-bottom: 2em; margin-top: 2em;">' +
-            '<strong style="margin-left: 0.5em;">Account Details</strong>' +
+            '<strong style="margin-left: 0.5em;">Account details</strong>' +
             '</h3>' +
             '<div id="main_div">' +
             '<table id="main_table" class="table table-striped table-hover">' +
@@ -444,7 +505,7 @@ ws.onmessage = function (ev) {
             '<td>Avatar</td>' +
             '<td>' + obj.avatar + '</td>' +
             '</tr>';
-        if(obj.referrer_name) {
+        if (obj.referrer_name) {
             block_details += '' +
                 '<tr class="twofield">' +
                 '<td>Referrer name</td>' +
@@ -457,11 +518,11 @@ ws.onmessage = function (ev) {
             '<td>' + obj.reg_block_id + '</td>' +
             '</tr>';
         $("#main_table").append(block_details);
-        for(var i = 0; i < arr_by_time.length; ++i) {
+        for (var i = 0; i < arr_by_time.length; ++i) {
             var txobj = arr_by_time[i];
             $("#txs").append('' +
                 '<tr class="data">' +
-                '<td><a href="javascript:void(0);" tx_hash=' + txobj.tx + '>' + txobj.tx + '</a></td>' +
+                '<td><a href="javascript:void(0);" tx_hash=' + txobj.tx + ' block_hash=' + txobj.block_hash + '>' + txobj.tx + '</a></td>' +
                 '<td>' + utc_str(txobj.utc) + '</td>' +
                 '</tr>'
             );
@@ -477,23 +538,188 @@ ws.onmessage = function (ev) {
             }));
             return false;
         });
+        $("#txs a").off("click").on("click", function () {
+            // event.preventDefault();
+            var tx_hash = $(this).attr("tx_hash");
+            var block_hash = $(this).attr("block_hash");
+            ws.send(JSON.stringify({msg_type: MSG_EXPLORER, msg_cmd: EXPLORER_TX_PAGE, msg_id:++msg_id, block_hash:block_hash, tx_hash:tx_hash}));
+            return false;
+        });
         var pageobj = $("#top_div_2").clone();
         history_pages[obj.pubkey] = pageobj;
-        history.pushState({type:"account", hash: obj.pubkey}, "account", null);
+        history.pushState({type: "account", hash: obj.pubkey}, "account", null);
+        $("html").scrollTop(0);
+    }else if(obj.msg_cmd == EXPLORER_TX_PAGE) {
+        if (obj.msg_id != msg_id) {
+            return;
+        }
+        in_main_page = false;
+        $("#top_div_2").remove();
+        var top_div_2 = $('<div id="top_div_2"></div>');
+        top_div_2.html('' +
+            '<ol id="path" style="font-size: 1em;" class="breadcrumb">' +
+            '<li>Home | Tx | <span>' + obj.tx_hash + '</span></li>' +
+            '</ol>' +
+            '<h3 style="margin-bottom: 2em; margin-top: 2em;">' +
+            '<strong style="margin-left: 0.5em;">Transaction details</strong>' +
+            '</h3>' +
+            '<div id="main_div">' +
+            '<table id="main_table" class="table table-striped table-hover">' +
+            '</table>' +
+            '</div>' +
+            '<h3 style="margin-bottom: 2em; margin-top: 4em;">' +
+            '<strong style="margin-left: 0.5em;">Raw data</strong>' +
+            '</h3>' +
+            '<pre id="raw"></pre>' +
+            '<div style="height: 2em;"></div>');
+        $('#top_div_1').append(top_div_2);
+        var rawobj = JSON.parse(obj.raw);
+        var block_details = '' +
+            '<tr class="twofield">' +
+            '<td>Tx hash</td>' +
+            '<td>' + obj.tx_hash + '</td>' +
+            '</tr>' +
+            '<tr class="twofield">' +
+            '<td>Tx type</td>';
+        if(obj.type == 1) {
+            block_details += '' +
+                '<td>1 (Register account)</td>' +
+                '</tr>' +
+                '<tr class="twofield">' +
+                '<td>Reg name</td>' +
+                '<td id="owner"><a href="javascript:void(0);" pubkey=' + obj.pubkey + '>' + Base64.decode(obj.name) + '</a></td>' +
+                '</tr>' +
+                '<tr class="twofield">' +
+                '<td>Avatar</td>' +
+                '<td>' + obj.avatar + '</td>' +
+                '</tr>' +
+                '<tr class="twofield">' +
+                '<td>Referrer name</td>' +
+                '<td id="other"><a href="javascript:void(0);" pubkey=' + obj.referrer_pubkey + '>' + Base64.decode(obj.referrer_name) + '</a></td>' +
+                '</tr>';
+        } else if(obj.type == 2) {
+            block_details += '' +
+                '<td>2 (Send coin)</td>' +
+                '</tr>' +
+                '<tr class="twofield">' +
+                '<td>Sender</td>' +
+                '<td id="owner"><a href="javascript:void(0);" pubkey=' + obj.pubkey + '>' + Base64.decode(obj.owner) + '</a></td>' +
+                '</tr>' +
+                '<tr class="twofield">' +
+                '<td>Receiver</td>' +
+                '<td id="other"><a href="javascript:void(0);" pubkey=' + obj.receiver_pubkey + '>' + Base64.decode(obj.receiver) + '</a></td>' +
+                '</tr>' +
+                '<tr class="twofield">' +
+                '<td>Amount</td>' +
+                '<td>' + obj.amount + ' ASK</td>' +
+                '</tr>';
+            if(obj.memo) {
+                block_details += '' +
+                    '<tr class="twofield">' +
+                    '<td>Memo (base64)</td>' +
+                    '<td>' + obj.memo + '</td>' +
+                    '</tr>';
+            }
+        } else if(obj.type == 3) {
+            block_details += '' +
+                '<td>3 (New topic)</td>' +
+                '</tr>' +
+                '<tr class="twofield">' +
+                '<td>Topic initiator</td>' +
+                '<td id="owner"><a href="javascript:void(0);" pubkey=' + obj.pubkey + '>' + Base64.decode(obj.owner) + '</a></td>' +
+                '</tr>' +
+                '<tr class="twofield">' +
+                '<td>Topic reward</td>' +
+                '<td>' + obj.reward + ' ASK</td>' +
+                '</tr>';
+        } else if(obj.type == 4) {
+            block_details += '' +
+                '<td>4 (Reply to)</td>' +
+                '</tr>' +
+                '<tr class="twofield">' +
+                '<td>Replier</td>' +
+                '<td id="owner"><a href="javascript:void(0);" pubkey=' + obj.pubkey + '>' + Base64.decode(obj.owner) + '</a></td>' +
+                '</tr>';
+            if(obj.reply_to) {
+                block_details += '' +
+                    '<tr class="twofield">' +
+                    '<td>Reply to</td>' +
+                    '<td id="other"><a href="javascript:void(0);" pubkey=' + obj.reply_to_pubkey + '>' + Base64.decode(obj.reply_to) + '</a></td>' +
+                    '</tr>';
+            }
+        } else if(obj.type == 5) {
+            block_details += '' +
+                '<td>5 (Give reward)</td>' +
+                '</tr>' +
+                '<tr class="twofield">' +
+                '<td>Rewarder</td>' +
+                '<td id="owner"><a href="javascript:void(0);" pubkey=' + obj.pubkey + '>' + Base64.decode(obj.owner) + '</a></td>' +
+                '</tr>' +
+                '<tr class="twofield">' +
+                '<td>reward to</td>' +
+                '<td id="other"><a href="javascript:void(0);" pubkey=' + obj.reward_to_pubkey + '>' + Base64.decode(obj.reward_to) + '</a></td>' +
+                '</tr>' +
+                '<tr class="twofield">' +
+                '<td>Reward amount</td>' +
+                '<td>' + obj.reward + ' ASK</td>' +
+                '</tr>';
+        }
+        block_details += '' +
+            '<tr class="twofield">' +
+            '<td>Tx fee</td>' +
+            '<td>2 ASK</td>' +
+            '</tr>' +
+            '<tr class="twofield">' +
+            '<td>Tx utc</td>' +
+            '<td>' + utc_str(obj.utc) + '</td>' +
+            '</tr>' +
+            '<tr class="twofield">' +
+            '<td>Tx\'s block height</td>' +
+            '<td>' + obj.block_id + '</td>' +
+            '</tr>' +
+            '<tr class="twofield">' +
+            '<td>Tx\'s block hash</td>' +
+            '<td id="txblock"><a href="javascript:void(0);" block_hash=' + obj.block_hash + '>' + obj.block_hash + '</a></td>' +
+            '</tr>';
+        $("#main_table").append(block_details);
+        $("#raw").html(syntaxHighlight(rawobj));
+        $("#owner a").off("click").on("click", function () {
+            // event.preventDefault();
+            var pubkey = $(this).attr("pubkey");
+            ws.send(JSON.stringify({
+                msg_type: MSG_EXPLORER,
+                msg_cmd: EXPLORER_ACCOUNT_PAGE,
+                msg_id: ++msg_id,
+                pubkey: pubkey
+            }));
+            return false;
+        });
+        $("#other a").off("click").on("click", function () {
+            // event.preventDefault();
+            var pubkey = $(this).attr("pubkey");
+            ws.send(JSON.stringify({
+                msg_type: MSG_EXPLORER,
+                msg_cmd: EXPLORER_ACCOUNT_PAGE,
+                msg_id: ++msg_id,
+                pubkey: pubkey
+            }));
+            return false;
+        });
+        $("#txblock a").off("click").on("click", function () {
+            // event.preventDefault();
+            var block_hash = $(this).attr("block_hash");
+            ws.send(JSON.stringify({msg_type: MSG_EXPLORER, msg_cmd: EXPLORER_BLOCK_PAGE, msg_id:++msg_id, block_hash:block_hash}));
+            return false;
+        });
+        var pageobj = $("#top_div_2").clone();
+        history_pages[obj.tx_hash] = pageobj;
+        history.pushState({type: "tx", hash: obj.tx_hash}, "tx", null);
         $("html").scrollTop(0);
     } else if(obj.msg_cmd == EXPLORER_BLOCK_PAGE) {
         if(obj.msg_id != msg_id) {
             return;
         }
-        if(in_main_page) {
-            in_main_page = false;
-            start_from_main_page = true;
-        } else {
-            start_from_main_page = false;
-        }
-        if(!block_list_page) {
-            block_list_page = $("#top_div_2").clone();
-        }
+        in_main_page = false;
         $("#top_div_2").remove();
         var top_div_2 = $('<div id="top_div_2"></div>');
         top_div_2.html('' +
@@ -501,7 +727,7 @@ ws.onmessage = function (ev) {
             '<li>Home | Block | <span>' + obj.block_hash + '</span></li>' +
             '</ol>' +
             '<h3 style="margin-bottom: 2em; margin-top: 2em;">' +
-            '<strong style="margin-left: 0.5em;">Block Details</strong>' +
+            '<strong style="margin-left: 0.5em;">Block details</strong>' +
             '</h3>' +
             '<div id="main_div">' +
             '<table id="main_table" class="table table-striped table-hover">' +
@@ -565,7 +791,7 @@ ws.onmessage = function (ev) {
             '<td>' + obj.tx_num + ' ASK</td>' +
             '</tr>' +
             '<tr class="twofield">' +
-            '<td>Total Fee</td>' +
+            '<td>Total fee</td>' +
             '<td>' + obj.tx_num * 2 + ' ASK</td>' +
             '</tr>';
 
@@ -578,6 +804,12 @@ ws.onmessage = function (ev) {
                 '</tr>'
             );
         }
+        $("#txs a").off("click").on("click", function () {
+            // event.preventDefault();
+            var tx_hash = $(this).attr("tx_hash");
+            ws.send(JSON.stringify({msg_type: MSG_EXPLORER, msg_cmd: EXPLORER_TX_PAGE, msg_id:++msg_id, block_hash:obj.block_hash, tx_hash:tx_hash}));
+            return false;
+        });
         $("#pre_hash a").off("click").on("click", function () {
             // event.preventDefault();
             var block_hash = $(this).attr("block_hash");

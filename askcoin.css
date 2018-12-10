@@ -17,6 +17,19 @@ tr.data {
     font-weight: bold;
 }
 
+pre {
+    /*border-radius: 0.3em;*/
+    padding: 1em;
+    /*margin: 0.5em;*/
+    font-size: 1em;
+    /*outline: 1px solid #ccc;*/
+}
+.string { color: crimson; }
+.number { color: #2e6da4; }
+.boolean { color: blue; }
+.null { color: magenta; }
+.key { color: green; }
+
 tr.twofield td:first-child {
     font-size: 1em;
     height: 4em;
