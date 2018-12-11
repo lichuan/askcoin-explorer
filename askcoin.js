@@ -48,7 +48,7 @@ function utc_str(utc) {
     return dt_str;
 }
 
-function syntaxHighlight(json) {
+function syntax_high_light(json) {
     if (typeof json != 'string') {
         json = JSON.stringify(json, undefined, 2);
     }
@@ -324,12 +324,48 @@ ws.onmessage = function (ev) {
                 }));
             }));
         }
+        if (!block_list_page) {
+            $("#query").off("click").on("click", function () {
+                var input_val = $("#input").val();
+                if (!/^\d+$/.test(input_val)) {
+                    if (input_val.length == 0) {
+                        $("#notice").show();
+                        $("#notice span:odd").text("Block hash or Account id can't be empty !");
+                    } else if (input_val.length != 44) {
+                        $("#notice").show();
+                        $("#notice span:odd").text("The length of block hash must be 44 bytes !");
+                    } else {
+                        ws.send(JSON.stringify({
+                            msg_type: MSG_EXPLORER,
+                            msg_cmd: EXPLORER_QUERY,
+                            msg_id: ++msg_id,
+                            block_hash: input_val
+                        }));
+                    }
+                } else {
+                    var account_id = parseInt(input_val);
+                    ws.send(JSON.stringify({
+                        msg_type: MSG_EXPLORER,
+                        msg_cmd: EXPLORER_QUERY,
+                        msg_id: ++msg_id,
+                        id: account_id
+                    }));
+                }
+            });
+        }
         block_list_page = {};
         block_list_page.page = $("#top_div_2").clone();
         block_list_page.from_main = true;
         setTimeout(function () {
-            ws.send(JSON.stringify({msg_type:MSG_EXPLORER, msg_cmd:EXPLORER_MAIN_PAGE, msg_id:0}));
+            ws.send(JSON.stringify({msg_type: MSG_EXPLORER, msg_cmd: EXPLORER_MAIN_PAGE, msg_id: 0}));
         }, 5000);
+    }else if(obj.msg_cmd == EXPLORER_QUERY) {
+        $("#notice").show();
+        if(obj.type == 1) {
+            $("#notice span:odd").text("Account id does not exist !");
+        } else {
+            $("#notice span:odd").text("Block hash does not exist !");
+        }
     } else if(obj.msg_cmd == EXPLORER_NEXT_PAGE) {
         if (obj.msg_id != msg_id) {
             return;
@@ -490,7 +526,7 @@ ws.onmessage = function (ev) {
             '<td>' + Base64.decode(obj.name) + '</td>' +
             '</tr>' +
             '<tr class="twofield">' +
-            '<td>Account Id</td>' +
+            '<td>Account id</td>' +
             '<td>' + obj.id + '</td>' +
             '</tr>' +
             '<tr class="twofield">' +
@@ -682,7 +718,7 @@ ws.onmessage = function (ev) {
             '<td id="txblock"><a href="javascript:void(0);" block_hash=' + obj.block_hash + '>' + obj.block_hash + '</a></td>' +
             '</tr>';
         $("#main_table").append(block_details);
-        $("#raw").html(syntaxHighlight(rawobj));
+        $("#raw").html(syntax_high_light(rawobj));
         $("#owner a").off("click").on("click", function () {
             // event.preventDefault();
             var pubkey = $(this).attr("pubkey");
