@@ -676,13 +676,6 @@ ws.onmessage = function (ev) {
                 '<td>Replier</td>' +
                 '<td id="owner"><a href="javascript:void(0);" pubkey=' + obj.pubkey + '>' + Base64.decode(obj.owner) + '</a></td>' +
                 '</tr>';
-            if(obj.reply_to) {
-                block_details += '' +
-                    '<tr class="twofield">' +
-                    '<td>Reply to</td>' +
-                    '<td id="other"><a href="javascript:void(0);" pubkey=' + obj.reply_to_pubkey + '>' + Base64.decode(obj.reply_to) + '</a></td>' +
-                    '</tr>';
-            }
         } else if(obj.type == 5) {
             block_details += '' +
                 '<td>5 (Give reward)</td>' +
@@ -690,10 +683,6 @@ ws.onmessage = function (ev) {
                 '<tr class="twofield">' +
                 '<td>Rewarder</td>' +
                 '<td id="owner"><a href="javascript:void(0);" pubkey=' + obj.pubkey + '>' + Base64.decode(obj.owner) + '</a></td>' +
-                '</tr>' +
-                '<tr class="twofield">' +
-                '<td>reward to</td>' +
-                '<td id="other"><a href="javascript:void(0);" pubkey=' + obj.reward_to_pubkey + '>' + Base64.decode(obj.reward_to) + '</a></td>' +
                 '</tr>' +
                 '<tr class="twofield">' +
                 '<td>Reward amount</td>' +
