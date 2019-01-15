@@ -371,9 +371,9 @@ ws.onmessage = function (ev) {
         $("#notice").show();
         if(obj.type == 1) {
             $("#notice span:odd").text("Account id does not exist !");
-        } else if(type == 2) {
+        } else if(obj.type == 2) {
             $("#notice span:odd").text("Block hash does not exist !");
-        } else if(type == 3) {
+        } else if(obj.type == 3) {
 			$("#notice span:odd").text("Block id does not exist !");
 		}
     } else if(obj.msg_cmd == EXPLORER_NEXT_PAGE) {
