@@ -327,8 +327,24 @@ ws.onmessage = function (ev) {
         if (!block_list_page) {
             $("#query").off("click").on("click", function () {
                 var input_val = $("#input").val();
-                if (!/^\d+$/.test(input_val)) {
-                    if (input_val.length == 0) {
+                if (/^\d+$/.test(input_val)) {
+					var account_id = parseInt(input_val);
+                    ws.send(JSON.stringify({
+                        msg_type: MSG_EXPLORER,
+                        msg_cmd: EXPLORER_QUERY,
+                        msg_id: ++msg_id,
+                        id: account_id
+                    }));                    
+				} else if(/^b:\d+$/.test(input_val)) {
+					var _block_id = parseInt(input_val.substr(2));
+					ws.send(JSON.stringify({
+                        msg_type: MSG_EXPLORER,
+                        msg_cmd: EXPLORER_QUERY,
+                        msg_id: ++msg_id,
+                        block_id: _block_id
+                    }));			
+                } else {
+					if (input_val.length == 0) {
                         $("#notice").show();
                         $("#notice span:odd").text("Block hash or Account id can't be empty !");
                     } else if (input_val.length != 44) {
@@ -341,15 +357,7 @@ ws.onmessage = function (ev) {
                             msg_id: ++msg_id,
                             block_hash: input_val
                         }));
-                    }
-                } else {
-                    var account_id = parseInt(input_val);
-                    ws.send(JSON.stringify({
-                        msg_type: MSG_EXPLORER,
-                        msg_cmd: EXPLORER_QUERY,
-                        msg_id: ++msg_id,
-                        id: account_id
-                    }));
+                    }                  
                 }
             });
         }
@@ -363,9 +371,11 @@ ws.onmessage = function (ev) {
         $("#notice").show();
         if(obj.type == 1) {
             $("#notice span:odd").text("Account id does not exist !");
-        } else {
+        } else if(type == 2) {
             $("#notice span:odd").text("Block hash does not exist !");
-        }
+        } else if(type == 3) {
+			$("#notice span:odd").text("Block id does not exist !");
+		}
     } else if(obj.msg_cmd == EXPLORER_NEXT_PAGE) {
         if (obj.msg_id != msg_id) {
             return;
