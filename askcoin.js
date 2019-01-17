@@ -535,6 +535,10 @@ ws.onmessage = function (ev) {
             '<td>Account name</td>' +
             '<td>' + Base64.decode(obj.name) + '</td>' +
             '</tr>' +
+			'<tr class="twofield">' +
+            '<td>Account name (base64)</td>' +
+            '<td>' + obj.name + '</td>' +
+            '</tr>' +
             '<tr class="twofield">' +
             '<td>Account id</td>' +
             '<td>' + obj.id + '</td>' +
