@@ -800,6 +800,8 @@ ws.onmessage = function (ev) {
                 '<td id="pre_hash"><a href="javascript:void(0);" block_hash=' + obj.pre_hash + '>' + obj.pre_hash + '</a></td>' +
                 '</tr>';
         }
+        var version_str = "" + Math.floor(obj.version / 10000000) + "." + 
+        Math.floor(obj.version % 10000000 / 10000) + "." + Math.floor(obj.version % 10000);
         block_details += '' +
             '<tr class="twofield">' +
             '<td>Number of transactions</td>' +
@@ -808,6 +810,10 @@ ws.onmessage = function (ev) {
             '<tr class="twofield">' +
             '<td>Block time (utc)</td>' +
             '<td>' + dt_str + '</td>' +
+            '</tr>' +
+            '<tr class="twofield">' +
+            '<td>Version</td>' +
+            '<td>' + version_str + '</td>' +
             '</tr>' +
             '<tr class="twofield">' +
             '<td>Zero_bits</td>' +
