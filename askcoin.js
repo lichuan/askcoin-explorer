@@ -524,7 +524,7 @@ ws.onmessage = function (ev) {
             '</table>' +
             '</div>' +
             '<h3 style="margin-bottom: 2em; margin-top: 4em;">' +
-            '<strong style="margin-left: 0.5em;">Recent related transactions (' + arr_by_time.length + ')</strong>' +
+            '<strong style="margin-left: 0.5em;">Recent transactions (' + arr_by_time.length + ')</strong>' +
             '</h3>' +
             '<table id="txs" class="table table-striped table-hover">' +
             '</table>' +
