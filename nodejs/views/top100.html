@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Askcoin Top100</title>
+    <link rel="icon" href="favicon.ico" type="img/x-ico" />
+    <link href="askcoin.css" rel="stylesheet" />
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+
+<div style="margin-left: 7em;margin-top: 1em;">
+    <a href="http://www.askcoin.me"><img alt="logo" src="logo1.png"/></a>
+</div>
+
+<div id="top_div" style="margin-left: 5%; margin-right: 5%; margin-top: 1em; background-color: #ffffff; border-radius: 1em; padding-top: 1em; padding-bottom: 1em;">
+  <table class="table table-striped table-hover">
+  <tr class="title">
+    <td>Rank</td>
+    <td>Account name</td>
+    <td>Account id</td>
+    <td>Balance</td>
+  </tr>
+
+  {{#each top100}}
+  <tr class="data">
+    <td>{{add_one @index}}</td>
+    <td>{{this.name}}</td>
+    <td>{{this.id}}</td>
+    <td>{{this.balance}} ASK</td>
+  </tr>
+  {{/each}}
+
+  </table>
+</div>
+
+<div class="foot">
+    <p>Copyright © Askcoin</p>
+</div>
+</body>
+</html>
