@@ -3,7 +3,7 @@ var express = require('express');
 var app = express();
 const exphbs = require('express-handlebars');
 
-var ws = new WebSocket('ws://node1.askcoin.me:19050');
+var ws = new WebSocket('ws://explorer.askcoin.me:19050');
 
 ws.on('open', function() {
     // send ping message    

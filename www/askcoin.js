@@ -19,7 +19,7 @@ var msg_id = 0;
 var history_pages = {};
 var last_hash = null;
 
-var ws = new WebSocket("ws://node1.askcoin.me:19050");
+var ws = new WebSocket("wss://explorer.askcoin.me/wss");
 
 function base64tohex(base64) {
     var raw = atob(base64);
